@@ -328,12 +328,14 @@ Update the original insight accordingly and return ONLY the revised insight. Do 
 
         # Display previous insight box
         if 'final_insights' in st.session_state:
-            with st.expander("Generated Insight", expanded=True):
-                st.markdown(st.session_state['final_insights'])
+           
 
             chain_refine = LLMChain(llm=llm_refine, prompt=refinement_prompt)
             revised = chain_refine.run(insight=st.session_state['final_insights'], query=user_query)
             st.success("🔁 Updated Insight:")
             st.markdown(revised)
+
+            with st.expander("Generated Insight", expanded=True):
+                st.markdown(st.session_state['final_insights'])
         else:
             st.info("Please generate the insights above first before refining them.")
