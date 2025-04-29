@@ -3,11 +3,37 @@ import requests
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_openai import AzureChatOpenAI
+import re
 
 # --- Azure OpenAI Configuration ---
 AZURE_OPENAI_ENDPOINT = "https://ciaiaiservices.openai.azure.com/"
 AZURE_OPENAI_API_KEY = "817dce22f5a548b8b11fe0b6a3cf2c36"
 AZURE_DEPLOYMENT_NAME = "gpt-35-turbo-0613"
+
+# --- Utility: Check NCT ID Format ---
+def is_valid_nct_format(nct_id):
+    return re.fullmatch(r"NCT\d{8}", nct_id.strip().upper()) is not None
+
+# --- Utility: Check NCT ID Existence ---
+def does_nct_id_exist(nct_id):
+    url = f"https://clinicaltrials.gov/api/v2/studies/{nct_id}"
+    response = requests.get(url)
+    return response.status_code == 200
+
+# --- Get LLM-Suggested NCT IDs ---
+def suggest_closest_nct_ids(nct_id, llm):
+    prompt = f"""
+The user entered an invalid NCT ID: {nct_id}.
+
+Please suggest the top 3 most likely valid NCT IDs that the user may have intended. Only return the list in this format:
+[
+  "NCTxxxxxxx1",
+  "NCTxxxxxxx2",
+  "NCTxxxxxxx3"
+]
+"""
+    response = llm.invoke(prompt)
+    return response.content
 
 # --- Trial Data Fetch Function ---
 def get_clinical_trial_info(nct_id):
@@ -17,7 +43,6 @@ def get_clinical_trial_info(nct_id):
         if response.status_code == 200:
             return response.json()
         else:
-            st.error(f"API Error: {response.status_code}")
             return None
     except Exception as e:
         st.error(f"Error fetching trial data: {str(e)}")
@@ -59,55 +84,65 @@ def process_trial_data(json_data):
 
 # --- UI Config ---
 st.set_page_config(page_title="Clinical Trial Insight Generator", layout="wide")
-st.title("🧬 GPT-Powered Clinical Trial Insight Generator")
+st.title("\U0001F9EC GPT-Powered Clinical Trial Insight Generator")
 
 # --- Collect Inputs ---
 with st.form("clinical_trial_form"):
     scenario_name = st.text_input("Scenario Name")
     indication = st.text_input("Indication")
     product = st.text_input("Product of Interest")
-    trial_id = st.text_input("Clinical Trial ID (NCT ID)")
+    trial_id = st.text_input("Clinical Trial ID (NCT ID)").strip().upper()
     submitted = st.form_submit_button("Submit")
 
-# --- On Submit: fetch and process trial info ---
+# --- On Submit: validate and process ---
 if submitted and trial_id:
-    trial_json = get_clinical_trial_info(trial_id)
-    if trial_json:
-        st.session_state['trial_json'] = trial_json
-        st.session_state['scenario_name'] = scenario_name
-        st.session_state['indication'] = indication
-        st.session_state['product'] = product
+    llm_validator = AzureChatOpenAI(
+        api_key=AZURE_OPENAI_API_KEY,
+        api_version="2024-05-01-preview",
+        azure_endpoint=AZURE_OPENAI_ENDPOINT,
+        deployment_name=AZURE_DEPLOYMENT_NAME,
+        temperature=0.2
+    )
 
-        clean_data = process_trial_data(trial_json)
-        st.session_state['clean_data'] = clean_data
+    if not is_valid_nct_format(trial_id) or not does_nct_id_exist(trial_id):
+        st.error("❌ The NCT ID seems incorrect or not found. Showing best guesses below...")
+        suggestions = suggest_closest_nct_ids(trial_id, llm_validator)
+        st.warning(f"🔍 Did you mean one of the following?\n\n{suggestions}")
+    else:
+        trial_json = get_clinical_trial_info(trial_id)
+        if trial_json:
+            st.session_state['trial_json'] = trial_json
+            st.session_state['scenario_name'] = scenario_name
+            st.session_state['indication'] = indication
+            st.session_state['product'] = product
 
-        st.success("✅ Trial data fetched and processed. Now proceed to generate insights.")
+            clean_data = process_trial_data(trial_json)
+            st.session_state['clean_data'] = clean_data
+
+            st.success("✅ Trial data fetched and processed. Now proceed to generate insights.")
+
 
 # --- If trial_json exists in session, allow prompt and insight generation ---
 if 'trial_json' in st.session_state and 'clean_data' in st.session_state:
-
     trial_json = st.session_state['trial_json']
     clean_data = st.session_state['clean_data']
     scenario_name = st.session_state['scenario_name']
     indication = st.session_state['indication']
     product = st.session_state['product']
 
-    # Show Summary
-    prompt_trial = "You are an expert in analyzing clinical trial studies and extracting key insights from the trial data for quick review. Take the {trial_json} and summarize it clearly."
-    llm_trial = AzureChatOpenAI(
-        api_key=AZURE_OPENAI_API_KEY,
-        api_version="2024-05-01-preview",
-        azure_endpoint=AZURE_OPENAI_ENDPOINT,
-        deployment_name=AZURE_DEPLOYMENT_NAME,
-        temperature=0,
-        seed=455
-    )
-    chain_trial = LLMChain(llm=llm_trial, prompt=PromptTemplate.from_template(prompt_trial))
-    insights_trial = chain_trial.run(trial_json=trial_json)
-    st.success("✅ Trial Summary:")
-    st.markdown(insights_trial)
+    # prompt_trial = "You are an expert in analyzing clinical trial studies and extracting key insights from the trial data for quick review. Take the {trial_json} and summarize it clearly."
+    # llm_trial = AzureChatOpenAI(
+    #     api_key=AZURE_OPENAI_API_KEY,
+    #     api_version="2024-05-01-preview",
+    #     azure_endpoint=AZURE_OPENAI_ENDPOINT,
+    #     deployment_name=AZURE_DEPLOYMENT_NAME,
+    #     temperature=0
+    # )
+    # chain_trial = LLMChain(llm=llm_trial, prompt=PromptTemplate.from_template(prompt_trial))
+    # insights_trial = chain_trial.run(trial_json=trial_json)
+    # st.success("✅ Trial Summary:")
+    # st.markdown(insights_trial)
 
-    # Derived fields
     nct_id = clean_data.get('NCT_ID', 'Not specified')
     brief_title = clean_data.get('Brief_Title', 'Not specified')
     conditions = clean_data.get('Conditions', 'Not specified')
@@ -191,16 +226,14 @@ Be extremely concise, structure your output with clear headers and bullet points
 
     prompt_input = st.text_area("Prompt Template", value=default_prompt, height=650)
 
-    if st.button("🚀 Generate Final Insights"):
+    if st.button("\U0001F680 Generate Final Insights"):
         with st.spinner("Calling Azure OpenAI..."):
             llm = AzureChatOpenAI(
                 api_key=AZURE_OPENAI_API_KEY,
                 api_version="2024-05-01-preview",
                 azure_endpoint=AZURE_OPENAI_ENDPOINT,
                 deployment_name=AZURE_DEPLOYMENT_NAME,
-                temperature=0,
-                seed= 455,
-                top_p=1
+                temperature=0
             )
             chain = LLMChain(llm=llm, prompt=PromptTemplate.from_template(prompt_input))
             final_insights = chain.run(
