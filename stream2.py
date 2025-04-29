@@ -100,6 +100,7 @@ if 'trial_json' in st.session_state and 'clean_data' in st.session_state:
         azure_endpoint=AZURE_OPENAI_ENDPOINT,
         deployment_name=AZURE_DEPLOYMENT_NAME,
         temperature=0,
+        seed=455
     )
     chain_trial = LLMChain(llm=llm_trial, prompt=PromptTemplate.from_template(prompt_trial))
     insights_trial = chain_trial.run(trial_json=trial_json)
@@ -198,6 +199,7 @@ Be extremely concise, structure your output with clear headers and bullet points
                 azure_endpoint=AZURE_OPENAI_ENDPOINT,
                 deployment_name=AZURE_DEPLOYMENT_NAME,
                 temperature=0,
+                seed= 455
             )
             chain = LLMChain(llm=llm, prompt=PromptTemplate.from_template(prompt_input))
             final_insights = chain.run(
