@@ -54,6 +54,43 @@ def get_clinical_trial_info(nct_id):
     except Exception as e:
         st.error(f"Error fetching trial data: {str(e)}")
         return None
+    
+# --- Fetch indications_and_usage from FDA API ---
+def fetch_and_extract_fda_products(indication):
+    encoded_indication = requests.utils.quote(f'"{indication}"')
+    url = f"https://api.fda.gov/drug/label.json?search=indications_and_usage:{encoded_indication}&limit=10"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            results = response.json().get("results", [])
+            if not results:
+                return "No relevant FDA data found."
+            usage_text = results[0].get("indications_and_usage", [""])[0]
+
+            llm_extract = AzureChatOpenAI(
+                api_key=AZURE_OPENAI_API_KEY,
+                api_version="2024-05-01-preview",
+                azure_endpoint=AZURE_OPENAI_ENDPOINT,
+                deployment_name=AZURE_DEPLOYMENT_NAME,
+                temperature=0
+            )
+
+            prompt = PromptTemplate.from_template("""
+From the following FDA indications_and_usage text, extract all product (drug) names mentioned clearly. Return only the product names as a list.
+
+"
+{usage_text}
+"
+""")
+
+            chain = LLMChain(llm=llm_extract, prompt=prompt)
+            return chain.run(usage_text=usage_text)
+
+        else:
+            return "FDA API returned an error."
+    except Exception as e:
+        return f"Error fetching data from FDA API: {str(e)}"
+
 
 # --- Trial Data Processing Function ---
 def process_trial_data(json_data):
@@ -328,7 +365,7 @@ Update the original insight accordingly and return ONLY the revised insight. Do 
 
         # Display previous insight box
         if 'final_insights' in st.session_state:
-           
+            
 
             chain_refine = LLMChain(llm=llm_refine, prompt=refinement_prompt)
             revised = chain_refine.run(insight=st.session_state['final_insights'], query=user_query)
@@ -339,3 +376,17 @@ Update the original insight accordingly and return ONLY the revised insight. Do 
                 st.markdown(st.session_state['final_insights'])
         else:
             st.info("Please generate the insights above first before refining them.")
+
+st.markdown("### 🏥 FDA Competitor Product Extraction")
+if indication:
+    user = st.button("click on this to get product")
+    if user:
+        result = fetch_and_extract_fda_products(indication)
+        if result and result.strip():
+            st.success("✅ Extracted Product Names from FDA:")
+            lines = result.strip().split("\n")
+            formatted = "\n".join([f"- {line.strip()}" for line in lines if line.strip()])
+            st.markdown(formatted)
+        else:
+            st.warning("⚠️ No products found or output was empty.")
+
