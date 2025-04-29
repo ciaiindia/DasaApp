@@ -199,7 +199,8 @@ Be extremely concise, structure your output with clear headers and bullet points
                 azure_endpoint=AZURE_OPENAI_ENDPOINT,
                 deployment_name=AZURE_DEPLOYMENT_NAME,
                 temperature=0,
-                seed= 455
+                seed= 455,
+                top_p=1
             )
             chain = LLMChain(llm=llm, prompt=PromptTemplate.from_template(prompt_input))
             final_insights = chain.run(
