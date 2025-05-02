@@ -1,4 +1,7 @@
-streamlit
+# requirements.txt (with common extras)
+
+Flask
 requests
 langchain
 langchain-openai
+gunicorn
