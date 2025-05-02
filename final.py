@@ -8,9 +8,11 @@ from flask import Flask, request, jsonify
 import json
 # import uuid # No longer needed for session IDs
 import time
+from flask_cors import CORS
 
 # --- Flask App Initialization ---
 app = Flask(__name__)
+CORS(app)
 
 # --- Configuration ---
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "https://ciaiaiservices.openai.azure.com/")
