@@ -230,19 +230,15 @@ def generate_trial_insights_from_client_state():
 
     # --- Define the Detailed Insight Prompt (Same as before) ---
     insight_prompt_template = '''You are a pharmaceutical commercial strategist and market access analyst. Your task is to analyze the following clinical trial data and generate structured, comprehensive, and clinically valid insights tailored for life sciences commercial teams.
-
-Analyze the Inclusion and Exclusion Criteria from the provided ClinicalTrials data. Identify all medical conditions or indications mentioned in the text, and return the corresponding ICD-10 diagnostic codes.
-For both inclusion and exclusion criteria:
-1. Extract relevant condition names or diagnoses.
-2. Map each to accurate and up-to-date ICD-10 codes.
-3. Group the codes based on clinical similarity or context.
-Do not include codes related to procedures, surgeries, or adverse events.
-Use trusted sources like the WHO ICD-10 database to ensure coding accuracy and standardization.
-
+Using the provided medical indication name and the corresponding Inclusion and Exclusion Criteria extracted from ClinicalTrials data, identify and compile all relevant ICD-10 codes. Thoroughly interpret the clinical context described in each criterion to determine the appropriate diagnostic codes.
+For the inclusion criteria, focus on identifying ICD-10 codes that accurately represent the underlying medical conditions or diagnoses specified. Organize the resulting codes into logically defined groups based on clinical similarity, comorbidities, or related pathologies.
+For the exclusion criteria, evaluate each condition or contraindication described, and select corresponding ICD-10 codes that clearly reflect those exclusion parameters. Group these codes meaningfully to mirror the structure and intent of the criteria.
+Exclude any codes that refer to medical procedures, surgeries, or adverse events, as the focus should remain strictly on diagnostic classifications.
+Ensure that all selected codes are accurate, up-to-date, and aligned with standard classifications, referencing authoritative sources such as the WHO ICD-10 database or equivalent coding guidelines.
 Carefully examine the inclusion and exclusion criteria to extract:
-1. Age eligibility range (in years), using the lowest and highest age values stated or implied.
+1. Age Groups – Analyze the clinical condition specified in the trial and categorize participants into meaningful age groups. While a separate group for ages 65+ can be considered, create 3 to 5 distinct age buckets within the 1–60 age range based on the nature of the disease and the trial's inclusion criteria. Do not restrict the categorization to just the 1–60 and 65+ groups. Ensure that each age group is clearly defined, contextually relevant, and accurately reflects the trial's requirements.
 2. Gender eligibility, if mentioned (e.g., "All", "Male", "Female").
-
+3. In AddressableMarketDefinition - Analyze the text in the inclusion criteria thoroughly and provide it.
 Ensure the extracted insights are based strictly on the given clinical trial data and ICD definitions.
  
 CLINICAL TRIAL INFORMATION:
@@ -259,18 +255,24 @@ SCENARIO INFORMATION:
 - Product of Interest: {product}
  
 Return the following insights in the below JSON Format ONLY:
-example_json
-{{
+example_json = """{{
   "BroadMarketDefinition": {{
-    "ICDCodes": [],
-    "Description": "This broad market includes all patients who may potentially be relevant based on associated ICD codes for initial condition identification, before applying additional criteria."
+  "BroadMarketDescription":"",
+    "ICDCodes": []
   }},
   "AddressableMarketDefinition": "A brief blurb summarizing how we will define the addressable market (e.g., this will be along the lines of 'In order to identify...')",
   "AddressableMarketCriteriaByPatientAttribute": {{
-    "Age": "Criteria range or Does not apply",
-    "AgeDescription": "Defines age boundaries for inclusion, such as pediatric, adult, or elderly populations based on clinical relevance.",
+    "Age": {{
+      "AgeGroup1": {{
+        "AgeGroup1": "Group 1 Name",
+        "AgeGroup1Description": "Description of Group 1",
+      }},
+      "AgeGroup2": {{
+        "AgeGroup2": "Group 2 Name",
+        "AgeGroup2Description": "Description of Group 2",
+      }},
+     ...
     "Gender": "Male, Female, Both or Does not apply",
-    "GenderDescription": "Specifies whether the market analysis includes male, female, or both genders based on disease epidemiology or study design.",
     "AdditionalICDCodesRequired": {{
       "Group1": {{
         "GroupName": "Group 1 Name",
@@ -313,23 +315,46 @@ example_json
         "GroupName": "Exclusion Group 4 Name",
         "GroupDescription": "Description of Exclusion Group 4",
         "ICDCodes": []
-      }}
+      }},
     }}
   }}
 }}
 
 Here is the one such example:
-{{
+example_json = {{
   "BroadMarketDefinition": {{
-    "ICDCodes": ["I48.0", "I48.11", "I48.19", "I48.2", "I48.20", "I48.21", "I48.3", "I48.4", "I48.91", "I48.92"],
-    "Description": "Includes all ICD codes related to atrial fibrillation to define the broader market population before applying inclusion/exclusion filters."
+    "BroadMarketDescription": "Includes all ICD codes related to atrial fibrillation to define the broader market population before applying inclusion/exclusion filters.",
+    "ICDCodes": ["I48.0", "I48.11", "I48.19", "I48.2", "I48.20", "I48.21", "I48.3", "I48.4", "I48.91", "I48.92"]
   }},
   "AddressableMarketDefinition": "To refine the addressable population, we will stratify atrial fibrillation patients into clinically meaningful subgroups based on comorbidities and trial exclusion patterns observed in real-world data.",
   "AddressableMarketCriteriaByPatientAttribute": {{
-    "Age": "21+",
-    "AgeDescription": "Includes adult patients aged 21 years and above, in line with typical clinical trial eligibility and disease onset.",
+    "Age": {{
+      "AgeGroup1": {{
+        "AgeGroup1": "0-18",
+        "AgeGroup1Description": "Children and adolescents"
+      }},
+      "AgeGroup2": {{
+        "AgeGroup2": "19-36",
+        "AgeGroup2Description": "Young adults"
+      }},
+      "AgeGroup3": {{
+        "AgeGroup3": "37-54",
+        "AgeGroup3Description": "Middle-aged adults"
+      }},
+      "AgeGroup4": {{
+        "AgeGroup4": "55-72",
+        "AgeGroup4Description": "Older adults"
+      }},
+      "AgeGroup5": {{
+        "AgeGroup5": "73-90",
+        "AgeGroup5Description": "Elderly adults"
+      }},
+      "AgeGroup6": {{
+        "AgeGroup6": "91-100",
+        "AgeGroup6Description": "Very elderly adults"
+      }}
+    }},
     "Gender": "Both",
-    "GenderDescription": "Includes both male and female patients, assuming the condition prevalence and treatment applicability are not gender-restricted.",
     "AdditionalICDCodesRequired": {{
       "Group1": {{
         "GroupName": "Hypertension Comorbidity",
