@@ -230,77 +230,145 @@ def generate_trial_insights_from_client_state():
 
     # --- Define the Detailed Insight Prompt (Same as before) ---
     insight_prompt_template = '''You are a pharmaceutical commercial strategist and market access analyst. Your task is to analyze the following clinical trial data and generate structured, comprehensive, and clinically valid insights tailored for life sciences commercial teams.
-    Using the provided medical indication name and the corresponding Inclusion and Exclusion Criteria extracted from ClinicalTrials data, identify and compile all relevant ICD-10 codes. Thoroughly interpret the clinical context described in each criterion to determine the appropriate diagnostic codes.
 
-    For the inclusion criteria, focus on identifying ICD-10 codes that accurately represent the underlying medical conditions or diagnoses specified. Organize the resulting codes into logically defined groups based on clinical similarity, comorbidities, or related pathologies.
+Analyze the Inclusion and Exclusion Criteria from the provided ClinicalTrials data. Identify all medical conditions or indications mentioned in the text, and return the corresponding ICD-10 diagnostic codes.
+For both inclusion and exclusion criteria:
+1. Extract relevant condition names or diagnoses.
+2. Map each to accurate and up-to-date ICD-10 codes.
+3. Group the codes based on clinical similarity or context.
+Do not include codes related to procedures, surgeries, or adverse events.
+Use trusted sources like the WHO ICD-10 database to ensure coding accuracy and standardization.
 
-    For the exclusion criteria, evaluate each condition or contraindication described, and select corresponding ICD-10 codes that clearly reflect those exclusion parameters. Group these codes meaningfully to mirror the structure and intent of the criteria.
+Carefully examine the inclusion and exclusion criteria to extract:
+1. Age eligibility range (in years), using the lowest and highest age values stated or implied.
+2. Gender eligibility, if mentioned (e.g., "All", "Male", "Female").
 
-    Exclude any codes that refer to medical procedures, surgeries, or adverse events, as the focus should remain strictly on diagnostic classifications.
-
-    Ensure that all selected codes are accurate, up-to-date, and aligned with standard classifications, referencing authoritative sources such as the WHO ICD-10 database or equivalent coding guidelines.
-
-    CLINICAL TRIAL INFORMATION:
-
-    Trial ID: {nct_id}
-    Title: {brief_title}
-    Condition(s): {conditions}
-    Intervention(s): {interventions}
-    Target Population: {target_population}
-    Inclusion Criteria: {inclusion_only}
-    Exclusion Criteria: {exclusion_only}
-    SCENARIO INFORMATION:
-
-    Scenario Name: {scenario_name}
-    Indication: {indication}
-    Product of Interest: {product}
-    Return the following insights in the below JSON Format ONLY:
-
-    JSON
-
-    {{
-        "BroadMarketDefinition": {{
-            "ICDCodes": [],
-            "Description": "Description of ICD codes based on the primary Condition(s) of the trial."
-        }},
-        "AddressableMarketDefinition": "A brief blurb summarizing how the addressable market is defined based on key inclusion criteria (e.g., 'In order to identify the addressable market, patients must meet the primary condition [ICD codes from BroadMarketDefinition] and satisfy the following key inclusion criteria...')",
-        "AddressableMarketCriteriaByPatientAttribute": {{
-            "Age": {{
-                "Range": "{min_age} to {max_age}",
-                "Description": "Description of the age group based on trial eligibility (e.g., Adult patients, excludes pediatrics/geriatrics based on range)."
-            }},
-            "Gender": {{
-                "Value": "{sex}",
-                "Description": "Description of the gender eligibility (e.g., Includes both sexes, specific gender only based on {sex})."
-            }},
-            "AdditionalICDCodesRequired": {{
-                "Group1": {{
-                    "GroupName": "Inclusion Group 1 Name (e.g., Specific Comorbidity Required)",
-                    "GroupDescription": "Description of Inclusion Group 1 based on Inclusion Criteria",
-                    "ICDCodes": []
-                }},
-                "Group2": {{
-                    "GroupName": "Inclusion Group 2 Name",
-                    "GroupDescription": "Description of Inclusion Group 2 based on Inclusion Criteria",
-                    "ICDCodes": []
-                }}
-                // Add more groups ONLY IF distinct categories are clearly identifiable in inclusion criteria
-            }},
-            "ICDCodesToExclude": {{
-                "Group1": {{
-                    "GroupName": "Exclusion Group 1 Name (e.g., Contraindicated Condition)",
-                    "GroupDescription": "Description of Exclusion Group 1 based on Exclusion Criteria",
-                    "ICDCodes": []
-                }},
-                "Group2": {{
-                    "GroupName": "Exclusion Group 2 Name",
-                    "GroupDescription": "Description of Exclusion Group 2 based on Exclusion Criteria",
-                    "ICDCodes": []
-                }}
-                // Add more groups ONLY IF distinct categories are clearly identifiable in exclusion criteria
-            }}
-        }}
+Ensure the extracted insights are based strictly on the given clinical trial data and ICD definitions.
+ 
+CLINICAL TRIAL INFORMATION:
+- Trial ID: {nct_id}
+- Title: {brief_title}
+- Condition(s): {conditions}
+- Intervention(s): {interventions}
+- Target Population: {target_population}
+- Inclusion Criteria: {inclusion_only}
+- Exclusion Criteria: {exclusion_only}
+SCENARIO INFORMATION:
+- Scenario Name: {scenario_name}
+- Indication: {indication}
+- Product of Interest: {product}
+ 
+Return the following insights in the below JSON Format ONLY:
+example_json = """{{
+  "BroadMarketDefinition": {{
+    "ICDCodes": []
+  }},
+  "AddressableMarketDefinition": "A brief blurb summarizing how we will define the addressable market (e.g., this will be along the lines of 'In order to identify...')",
+  "AddressableMarketCriteriaByPatientAttribute": {{
+    "Age": "Criteria range or Does not apply",
+    "Gender": "Male, Female, Both or Does not apply",
+    "AdditionalICDCodesRequired": {{
+      "Group1": {{
+        "GroupName": "Group 1 Name",
+        "GroupDescription": "Description of Group 1",
+        "ICDCodes": []
+      }},
+      "Group2": {{
+        "GroupName": "Group 2 Name",
+        "GroupDescription": "Description of Group 2",
+        "ICDCodes": []
+      }},
+      "Group3": {{
+        "GroupName": "Group 3 Name",
+        "GroupDescription": "Description of Group 3",
+        "ICDCodes": []
+      }},
+      "Group4": {{
+        "GroupName": "Group 4 Name",
+        "GroupDescription": "Description of Group 4",
+        "ICDCodes": []
+      }}
+    }},
+    "ICDCodesToExclude": {{
+      "Group1": {{
+        "GroupName": "Exclusion Group 1 Name",
+        "GroupDescription": "Description of Exclusion Group 1",
+        "ICDCodes": []
+      }},
+      "Group2": {{
+        "GroupName": "Exclusion Group 2 Name",
+        "GroupDescription": "Description of Exclusion Group 2",
+        "ICDCodes": []
+      }},
+      "Group3": {{
+        "GroupName": "Exclusion Group 3 Name",
+        "GroupDescription": "Description of Exclusion Group 3",
+        "ICDCodes": []
+      }},
+      "Group4": {{
+        "GroupName": "Exclusion Group 4 Name",
+        "GroupDescription": "Description of Exclusion Group 4",
+        "ICDCodes": []
+      }},
     }}
+  }}
+}}
+
+Here is the one such example:
+example_json = """{{
+  "BroadMarketDefinition": {{
+    "ICDCodes": ["I48.0", "I48.11", "I48.19", "I48.2", "I48.20", "I48.21", "I48.3", "I48.4", "I48.91", "I48.92"]
+  }},
+  "AddressableMarketDefinition": "To refine the addressable population, we will stratify atrial fibrillation patients into clinically meaningful subgroups based on comorbidities and trial exclusion patterns observed in real-world data.",
+  "AddressableMarketCriteriaByPatientAttribute": {{
+    "Age": "21+",
+    "Gender": "Both",
+    "AdditionalICDCodesRequired": {{
+      "Group1": {{
+        "GroupName": "Hypertension Comorbidity",
+        "GroupDescription": "Patients with concurrent hypertension requiring management",
+        "ICDCodes": ["I10", "I11", "I12", "I13", "I15"]
+      }},
+      "Group2": {{
+        "GroupName": "Heart Failure Comorbidity",
+        "GroupDescription": "Patients with coexisting heart failure (systolic/diastolic)",
+        "ICDCodes": ["I50", "I50.1", "I50.2", "I50.3", "I50.4"]
+      }},
+      "Group3": {{
+        "GroupName": "Diabetes Mellitus Comorbidity",
+        "GroupDescription": "Patients with type 1/2 diabetes requiring pharmacological management",
+        "ICDCodes": ["E10", "E11", "E13"]
+      }},
+      "Group4": {{
+        "GroupName": "Other Arrhythmias",
+        "GroupDescription": "Patients with concurrent supraventricular/ventricular arrhythmias",
+        "ICDCodes": ["I47", "I49", "I46", "I44", "I45"]
+      }}
+    }},
+    "ICDCodesToExclude": {{
+      "Group1": {{
+        "GroupName": "Permanent AF Exclusion",
+        "GroupDescription": "Patients with permanent AF ineligible for rhythm control strategies",
+        "ICDCodes": ["I48.21"]
+      }},
+      "Group2": {{
+        "GroupName": "Valvular Heart Disease",
+        "GroupDescription": "Patients with structural valve abnormalities requiring intervention",
+        "ICDCodes": ["I34", "I35", "I36", "I37", "I38"]
+      }},
+      "Group3": {{
+        "GroupName": "Advanced Renal Disease",
+        "GroupDescription": "Patients with stage 4/5 CKD or dialysis dependence",
+        "ICDCodes": ["N18.4", "N18.5", "N18.6", "Z99.2"]
+      }},
+      "Group4": {{
+        "GroupName": "Hepatic Impairment",
+        "GroupDescription": "Patients with cirrhosis or severe liver dysfunction",
+        "ICDCodes": ["K70", "K71", "K72", "K73", "K74"]
+      }}
+    }}
+  }}
+}}
     IMPORTANT: Populate the JSON structure accurately based only on the provided CLINICAL TRIAL INFORMATION and SCENARIO INFORMATION. Generate valid ICD-10 codes relevant to the clinical descriptions in the criteria. If criteria are vague or don't map clearly to ICD-10, state that in the description and leave the ICDCodes array empty for that section. Fill in the group names and descriptions logically.'''
 
     # --- Generate Insights via LLM ---
