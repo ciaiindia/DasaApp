@@ -262,12 +262,15 @@ Return the following insights in the below JSON Format ONLY:
 example_json
 {{
   "BroadMarketDefinition": {{
-    "ICDCodes": []
+    "ICDCodes": [],
+    "Description": "This broad market includes all patients who may potentially be relevant based on associated ICD codes for initial condition identification, before applying additional criteria."
   }},
   "AddressableMarketDefinition": "A brief blurb summarizing how we will define the addressable market (e.g., this will be along the lines of 'In order to identify...')",
   "AddressableMarketCriteriaByPatientAttribute": {{
     "Age": "Criteria range or Does not apply",
+    "AgeDescription": "Defines age boundaries for inclusion, such as pediatric, adult, or elderly populations based on clinical relevance.",
     "Gender": "Male, Female, Both or Does not apply",
+    "GenderDescription": "Specifies whether the market analysis includes male, female, or both genders based on disease epidemiology or study design.",
     "AdditionalICDCodesRequired": {{
       "Group1": {{
         "GroupName": "Group 1 Name",
@@ -310,7 +313,7 @@ example_json
         "GroupName": "Exclusion Group 4 Name",
         "GroupDescription": "Description of Exclusion Group 4",
         "ICDCodes": []
-      }},
+      }}
     }}
   }}
 }}
@@ -318,12 +321,15 @@ example_json
 Here is the one such example:
 {{
   "BroadMarketDefinition": {{
-    "ICDCodes": ["I48.0", "I48.11", "I48.19", "I48.2", "I48.20", "I48.21", "I48.3", "I48.4", "I48.91", "I48.92"]
+    "ICDCodes": ["I48.0", "I48.11", "I48.19", "I48.2", "I48.20", "I48.21", "I48.3", "I48.4", "I48.91", "I48.92"],
+    "Description": "Includes all ICD codes related to atrial fibrillation to define the broader market population before applying inclusion/exclusion filters."
   }},
   "AddressableMarketDefinition": "To refine the addressable population, we will stratify atrial fibrillation patients into clinically meaningful subgroups based on comorbidities and trial exclusion patterns observed in real-world data.",
   "AddressableMarketCriteriaByPatientAttribute": {{
     "Age": "21+",
+    "AgeDescription": "Includes adult patients aged 21 years and above, in line with typical clinical trial eligibility and disease onset.",
     "Gender": "Both",
+    "GenderDescription": "Includes both male and female patients, assuming the condition prevalence and treatment applicability are not gender-restricted.",
     "AdditionalICDCodesRequired": {{
       "Group1": {{
         "GroupName": "Hypertension Comorbidity",
@@ -370,6 +376,7 @@ Here is the one such example:
     }}
   }}
 }}
+
     IMPORTANT: Populate the JSON structure accurately based only on the provided CLINICAL TRIAL INFORMATION and SCENARIO INFORMATION. Generate valid ICD-10 codes relevant to the clinical descriptions in the criteria. If criteria are vague or don't map clearly to ICD-10, state that in the description and leave the ICDCodes array empty for that section. Fill in the group names and descriptions logically.'''
 
     # --- Generate Insights via LLM ---
