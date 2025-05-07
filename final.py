@@ -259,7 +259,8 @@ SCENARIO INFORMATION:
 - Product of Interest: {product}
  
 Return the following insights in the below JSON Format ONLY:
-example_json = """{{
+example_json
+{{
   "BroadMarketDefinition": {{
     "ICDCodes": []
   }},
@@ -315,7 +316,7 @@ example_json = """{{
 }}
 
 Here is the one such example:
-example_json = """{{
+{{
   "BroadMarketDefinition": {{
     "ICDCodes": ["I48.0", "I48.11", "I48.19", "I48.2", "I48.20", "I48.21", "I48.3", "I48.4", "I48.91", "I48.92"]
   }},
