@@ -237,8 +237,11 @@ Exclude any codes that refer to medical procedures, surgeries, or adverse events
 Ensure that all selected codes are accurate, up-to-date, and aligned with standard classifications, referencing authoritative sources such as the WHO ICD-10 database or equivalent coding guidelines.
 Carefully examine the inclusion and exclusion criteria to extract:
 1. Age Groups – Analyze the clinical condition specified in the trial and categorize participants into meaningful age groups. While a separate group for ages 65+ can be considered, create 3 to 5 distinct age buckets within the 1–60 age range based on the nature of the disease and the trial's inclusion criteria. Do not restrict the categorization to just the 1–60 and 65+ groups. Ensure that each age group is clearly defined, contextually relevant, and accurately reflects the trial's requirements.
+2. Age Criteria – Review the details related to age mentioned in the inclusion criteria, if available.
 2. Gender eligibility, if mentioned (e.g., "All", "Male", "Female").
 3. In AddressableMarketDefinition - Analyze the text in the inclusion criteria thoroughly and provide it.
+Ensure the extracted insights are based strictly on the given clinical trial data and ICD definitions.
+
 Ensure the extracted insights are based strictly on the given clinical trial data and ICD definitions.
  
 CLINICAL TRIAL INFORMATION:
@@ -255,24 +258,27 @@ SCENARIO INFORMATION:
 - Product of Interest: {product}
  
 Return the following insights in the below JSON Format ONLY:
-example_json = """{{
+{{
   "BroadMarketDefinition": {{
   "BroadMarketDescription":"",
     "ICDCodes": []
   }},
   "AddressableMarketDefinition": "A brief blurb summarizing how we will define the addressable market (e.g., this will be along the lines of 'In order to identify...')",
   "AddressableMarketCriteriaByPatientAttribute": {{
+   	"AgeCriteria":{{
+	"AgeCriteria":"Age criteria value",
+	"AgeCriteriaDescription":"Includes most commonly diagnosed for this condition"
+	}},
     "Age": {{
       "AgeGroup1": {{
         "AgeGroup1": "Group 1 Name",
-        "AgeGroup1Description": "Description of Group 1",
       }},
       "AgeGroup2": {{
         "AgeGroup2": "Group 2 Name",
-        "AgeGroup2Description": "Description of Group 2",
       }},
      ...
     "Gender": "Male, Female, Both or Does not apply",
+	"GenderDescription": "This condition is observed in both males and females",
     "AdditionalICDCodesRequired": {{
       "Group1": {{
         "GroupName": "Group 1 Name",
@@ -321,40 +327,39 @@ example_json = """{{
 }}
 
 Here is the one such example:
-example_json = {{
+{{
   "BroadMarketDefinition": {{
     "BroadMarketDescription": "Includes all ICD codes related to atrial fibrillation to define the broader market population before applying inclusion/exclusion filters.",
     "ICDCodes": ["I48.0", "I48.11", "I48.19", "I48.2", "I48.20", "I48.21", "I48.3", "I48.4", "I48.91", "I48.92"]
   }},
   "AddressableMarketDefinition": "To refine the addressable population, we will stratify atrial fibrillation patients into clinically meaningful subgroups based on comorbidities and trial exclusion patterns observed in real-world data.",
   "AddressableMarketCriteriaByPatientAttribute": {{
+	"AgeCriteria":{{
+	"AgeCriteria":"21+",
+	"AgeCriteriaDescription":"Includes adult patients aged 21 years and above, in line with typical clinical trial eligibility and disease onset."
+	}},
     "Age": {{
       "AgeGroup1": {{
-        "AgeGroup1": "0-18",
-        "AgeGroup1Description": "Children and adolescents"
-      }},
+        "AgeGroup1": "0-18"
+        }},
       "AgeGroup2": {{
-        "AgeGroup2": "19-36",
-        "AgeGroup2Description": "Young adults"
+        "AgeGroup2": "19-36"
       }},
       "AgeGroup3": {{
-        "AgeGroup3": "37-54",
-        "AgeGroup3Description": "Middle-aged adults"
+        "AgeGroup3": "37-54"
       }},
       "AgeGroup4": {{
-        "AgeGroup4": "55-72",
-        "AgeGroup4Description": "Older adults"
+        "AgeGroup4": "55-72"
       }},
       "AgeGroup5": {{
-        "AgeGroup5": "73-90",
-        "AgeGroup5Description": "Elderly adults"
+        "AgeGroup5": "73-90"
       }},
       "AgeGroup6": {{
-        "AgeGroup6": "91-100",
-        "AgeGroup6Description": "Very elderly adults"
+        "AgeGroup6": "91-100"
       }}
     }},
     "Gender": "Both",
+	"GenderDescription":"This condition is observed in both males and females"
     "AdditionalICDCodesRequired": {{
       "Group1": {{
         "GroupName": "Hypertension Comorbidity",
