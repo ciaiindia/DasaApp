@@ -140,7 +140,7 @@ def fetch_and_summarize_trial_for_client_state():
 
 Trial JSON Data:
 ```json
-{trial_json_string['eligibilityCriteria'], trial_json_string['briefTitle']}
+{trial_json_string}
 Please provide the summary in this format:
 
 1: Specific Diagnosis/Condition(s) Targeted
