@@ -140,7 +140,7 @@ def fetch_and_summarize_trial_for_client_state():
 
 Trial JSON Data:
 ```json
-{trial_json_string}
+{trial_json_string['eligibilityCriteria'], trial_json_string['briefTitle']}
 Please provide the summary in this format:
 
 1: Specific Diagnosis/Condition(s) Targeted
@@ -160,7 +160,7 @@ Give the exact subheadings based on the summaries you are giving for these 3 cat
         prompt = PromptTemplate.from_template(prompt_trial_template)
         chain_trial = LLMChain(llm=llm_summarizer, prompt=prompt)
         trial_json_string = json.dumps(trial_json, indent=2)
-        trial_summary = chain_trial.run( trial_json_string=trial_json_string,
+        trial_summary = chain_trial.run(trial_json_string=trial_json_string,
             nct_id=processed_data.get('NCT_ID', 'N/A'), brief_title=processed_data.get('Brief_Title', 'N/A'),
             official_title=processed_data.get('Official_Title', 'N/A'), conditions=processed_data.get('Conditions', 'N/A'),
             inclusion_criteria_snippet=processed_data.get('Inclusion_Criteria', 'N/A')[:1000],
