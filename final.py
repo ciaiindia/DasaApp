@@ -91,32 +91,113 @@ def initialize_llm(temperature=0.0):
     try: llm = AzureChatOpenAI(api_key=AZURE_OPENAI_API_KEY, api_version=AZURE_API_VERSION, azure_endpoint=AZURE_OPENAI_ENDPOINT, deployment_name=AZURE_DEPLOYMENT_NAME, temperature=temperature, max_retries=3, request_timeout=60); return llm
     except Exception as e: print(f"Error initializing LLM: {e}"); raise
 
-# --- Endpoint 1: Returns Summary + All Data Needed for Endpoint 2 ---
+# # --- Endpoint 1: Returns Summary + All Data Needed for Endpoint 2 ---
+# @app.route('/fetch_and_summarize', methods=['POST'])
+# def fetch_and_summarize_trial_for_client_state():
+#     """
+#     Fetches trial data, processes it, generates a 3-category summary,
+#     and returns the summary PLUS all processed data and original inputs
+#     needed for the next step (client holds this state).
+#     Expects JSON: {"nct_id": "NCT...", "indication": "...", "product": "...", "scenario_name": "..."}
+#     """
+#     start_time = time.time()
+#     if not request.is_json:
+#         return jsonify({"status": "error", "message": "Request must be JSON"}), 400
+
+#     # Store the original request data, it's needed later
+#     original_input_data = request.get_json()
+#     nct_id = original_input_data.get('nct_id')
+#     indication = original_input_data.get('indication')
+#     # product = original_input_data.get('product', 'Not Provided') # Not directly needed here, but will be returned
+#     # scenario_name = original_input_data.get('scenario_name', 'Default Scenario') # Not directly needed here
+
+#     if not nct_id: return jsonify({"status": "error", "message": "Missing 'nct_id'"}), 400
+#     if not indication: return jsonify({"status": "error", "message": "Missing 'indication'"}), 400
+
+#     nct_id = nct_id.strip().upper()
+
+#     # --- Validation ---
+#     if not is_valid_nct_format(nct_id):
+#         suggestions = suggest_nct_ids_by_indication(indication)
+#         return jsonify({"status": "error", "message": f"Invalid NCT ID format: '{nct_id}'.", "suggestions": suggestions}), 400
+#     if not does_nct_id_exist(nct_id):
+#         suggestions = suggest_nct_ids_by_indication(indication)
+#         return jsonify({"status": "error", "message": f"NCT ID '{nct_id}' not found.", "suggestions": suggestions}), 404
+
+#     # --- Fetch Data ---
+#     trial_json, error_msg = get_clinical_trial_info(nct_id)
+#     if error_msg:
+#         suggestions = suggest_nct_ids_by_indication(indication)
+#         return jsonify({"status": "error", "message": f"Fetch error for {nct_id}: {error_msg}", "suggestions": suggestions}), 500
+#     if not trial_json: return jsonify({"status": "error", "message": f"No data returned for {nct_id}."}), 500
+
+#     # --- Process Data ---
+#     processed_data = process_trial_data(trial_json)
+#     if not processed_data.get('NCT_ID'): return jsonify({"status": "error", "message": f"Failed to process critical data for {nct_id}."}), 500
+
+#     # --- Generate Summary ---
+#     prompt_trial_template = """You are an expert clinical trial analyst. Summarize the key aspects from briefTitle, eligibilityCriteria - Inclusion and Exclusion criteria of the following clinical trial based solely on the provided JSON data. Structure your summary into exactly three categories as specified below. Be concise and factual in your summary.
+
+# Trial JSON Data:
+# ```json
+# {trial_json_string}
+# Please provide the summary in this format:
+
+# 1: Specific Diagnosis/Condition(s) Targeted
+# [List the primary medical condition(s) this trial is focused on, as mentioned in the 'conditions' field.]
+
+# 2: Key Comorbidities or Patient Characteristics (from Eligibility Criteria)
+# [Based only on the 'Inclusion Criteria' and 'Exclusion Criteria' fields, list significant comorbidities, prior treatments, or patient characteristics that determine eligibility. Focus on medical conditions mentioned.]
+
+# 3: Overall Trial Objective (One Sentence)
+# [Provide a single sentence summarizing the main goal or purpose of the study, inferring from title, interventions, and conditions.]
+
+# Give the exact subheadings based on the summaries you are giving for these 3 categories.
+# """
+#     trial_summary = "Summary generation failed." # Default
+#     try:
+#         llm_summarizer = initialize_llm(temperature=0.1)
+#         prompt = PromptTemplate.from_template(prompt_trial_template)
+#         chain_trial = LLMChain(llm=llm_summarizer, prompt=prompt)
+#         trial_json_string = json.dumps(trial_json, indent=2)
+#         trial_summary = chain_trial.run(trial_json_string=trial_json_string,
+#             nct_id=processed_data.get('NCT_ID', 'N/A'), brief_title=processed_data.get('Brief_Title', 'N/A'),
+#             official_title=processed_data.get('Official_Title', 'N/A'), conditions=processed_data.get('Conditions', 'N/A'),
+#             inclusion_criteria_snippet=processed_data.get('Inclusion_Criteria', 'N/A')[:500],
+#             exclusion_criteria_snippet=processed_data.get('Exclusion_Criteria', 'N/A')[:500]
+#         )
+#     except Exception as e:
+#         print(f"Error during LLM summarization for {nct_id}: {e}")
+#         trial_summary = f"Summary generation failed: {e}"
+
+#     # --- Return Success Response with ALL data needed later ---
+#     end_time = time.time()
+#     return jsonify({
+#         "status": "success",
+#         "message": "Trial data processed and summarized. Client should retain 'processed_data' and 'original_input' for the next step.",
+#         "duration_seconds": round(end_time - start_time, 2),
+#         "trial_summary": trial_summary,
+#         "processed_data": processed_data, # << Return processed data
+#         "original_input": original_input_data # << Return original inputs
+#     }), 200
+
+
 @app.route('/fetch_and_summarize', methods=['POST'])
 def fetch_and_summarize_trial_for_client_state():
-    """
-    Fetches trial data, processes it, generates a 3-category summary,
-    and returns the summary PLUS all processed data and original inputs
-    needed for the next step (client holds this state).
-    Expects JSON: {"nct_id": "NCT...", "indication": "...", "product": "...", "scenario_name": "..."}
-    """
+    
     start_time = time.time()
     if not request.is_json:
         return jsonify({"status": "error", "message": "Request must be JSON"}), 400
 
-    # Store the original request data, it's needed later
     original_input_data = request.get_json()
     nct_id = original_input_data.get('nct_id')
     indication = original_input_data.get('indication')
-    # product = original_input_data.get('product', 'Not Provided') # Not directly needed here, but will be returned
-    # scenario_name = original_input_data.get('scenario_name', 'Default Scenario') # Not directly needed here
 
     if not nct_id: return jsonify({"status": "error", "message": "Missing 'nct_id'"}), 400
     if not indication: return jsonify({"status": "error", "message": "Missing 'indication'"}), 400
 
     nct_id = nct_id.strip().upper()
 
-    # --- Validation ---
     if not is_valid_nct_format(nct_id):
         suggestions = suggest_nct_ids_by_indication(indication)
         return jsonify({"status": "error", "message": f"Invalid NCT ID format: '{nct_id}'.", "suggestions": suggestions}), 400
@@ -124,61 +205,70 @@ def fetch_and_summarize_trial_for_client_state():
         suggestions = suggest_nct_ids_by_indication(indication)
         return jsonify({"status": "error", "message": f"NCT ID '{nct_id}' not found.", "suggestions": suggestions}), 404
 
-    # --- Fetch Data ---
     trial_json, error_msg = get_clinical_trial_info(nct_id)
     if error_msg:
         suggestions = suggest_nct_ids_by_indication(indication)
         return jsonify({"status": "error", "message": f"Fetch error for {nct_id}: {error_msg}", "suggestions": suggestions}), 500
     if not trial_json: return jsonify({"status": "error", "message": f"No data returned for {nct_id}."}), 500
 
-    # --- Process Data ---
     processed_data = process_trial_data(trial_json)
     if not processed_data.get('NCT_ID'): return jsonify({"status": "error", "message": f"Failed to process critical data for {nct_id}."}), 500
 
     # --- Generate Summary ---
-    prompt_trial_template = """You are an expert clinical trial analyst. Summarize the key aspects from briefTitle, eligibilityCriteria - Inclusion and Exclusion criteria of the following clinical trial based solely on the provided JSON data. Structure your summary into exactly three categories as specified below. Be concise and factual in your summary.
+    prompt_trial_template = """You are an expert clinical trial analyst. Summarize the key aspects from the clinical trial based solely on the provided JSON data. Structure your summary into exactly three categories as specified below. Be concise and factual in your summary.
 
 Trial JSON Data:
 ```json
-{trial_json_string}
+{trial_data_for_summary}
 Please provide the summary in this format:
 
 1: Specific Diagnosis/Condition(s) Targeted
-[List the primary medical condition(s) this trial is focused on, as mentioned in the 'conditions' field.]
+[List the primary medical condition(s) this trial is focused on, as mentioned in the 'conditions' field within the provided JSON data.]
 
 2: Key Comorbidities or Patient Characteristics (from Eligibility Criteria)
-[Based only on the 'Inclusion Criteria' and 'Exclusion Criteria' fields, list significant comorbidities, prior treatments, or patient characteristics that determine eligibility. Focus on medical conditions mentioned.]
+[Based only on the 'Inclusion Criteria' and 'Exclusion Criteria' fields within the provided JSON data, list significant comorbidities, prior treatments, or patient characteristics that determine eligibility. Focus on medical conditions mentioned.]
 
 3: Overall Trial Objective (One Sentence)
-[Provide a single sentence summarizing the main goal or purpose of the study, inferring from title, interventions, and conditions.]
+[Provide a single sentence summarizing the main goal or purpose of the study, inferring from title, interventions, and conditions within the provided JSON data.]
 
 Give the exact subheadings based on the summaries you are giving for these 3 categories.
 """
     trial_summary = "Summary generation failed." # Default
     try:
         llm_summarizer = initialize_llm(temperature=0.1)
-        prompt = PromptTemplate.from_template(prompt_trial_template)
+        prompt = PromptTemplate.from_template(prompt_trial_template) # input_variables will be ['trial_data_for_summary']
         chain_trial = LLMChain(llm=llm_summarizer, prompt=prompt)
-        trial_json_string = json.dumps(trial_json, indent=2)
-        trial_summary = chain_trial.run(trial_json_string=trial_json_string,
-            nct_id=processed_data.get('NCT_ID', 'N/A'), brief_title=processed_data.get('Brief_Title', 'N/A'),
-            official_title=processed_data.get('Official_Title', 'N/A'), conditions=processed_data.get('Conditions', 'N/A'),
-            inclusion_criteria_snippet=processed_data.get('Inclusion_Criteria', 'N/A')[:500],
-            exclusion_criteria_snippet=processed_data.get('Exclusion_Criteria', 'N/A')[:500]
-        )
+
+        # Prepare a smaller dictionary for summarization, using processed_data
+        # The keys here should match what the prompt tells the LLM to look for (e.g., "conditions", "Inclusion Criteria")
+        data_for_summary_llm = {
+            "nctId": processed_data.get('NCT_ID', 'N/A'),
+            "title": processed_data.get('Brief_Title', 'N/A'), # Prompt refers to "title"
+            "officialTitle": processed_data.get('Official_Title', 'N/A'), # Good to include for context
+            "conditions": processed_data.get('Conditions', 'N/A'), # Prompt refers to "conditions"
+            "interventions": processed_data.get('Interventions', 'N/A'), # Prompt refers to "interventions"
+            "Inclusion Criteria": processed_data.get('Inclusion_Criteria', 'N/A'), # Prompt refers to "Inclusion Criteria"
+            "Exclusion Criteria": processed_data.get('Exclusion_Criteria', 'N/A')  # Prompt refers to "Exclusion Criteria"
+        }
+        # Convert this smaller dictionary to a JSON string
+        trial_data_for_summary_string = json.dumps(data_for_summary_llm, indent=2)
+
+        # Pass only the curated JSON string to the chain.
+        # The prompt template expects a variable named 'trial_data_for_summary'.
+        trial_summary = chain_trial.run(trial_data_for_summary=trial_data_for_summary_string)
+
     except Exception as e:
         print(f"Error during LLM summarization for {nct_id}: {e}")
-        trial_summary = f"Summary generation failed: {e}"
+        trial_summary = f"Summary generation failed: {e}" # Include actual error
 
-    # --- Return Success Response with ALL data needed later ---
     end_time = time.time()
     return jsonify({
         "status": "success",
         "message": "Trial data processed and summarized. Client should retain 'processed_data' and 'original_input' for the next step.",
         "duration_seconds": round(end_time - start_time, 2),
         "trial_summary": trial_summary,
-        "processed_data": processed_data, # << Return processed data
-        "original_input": original_input_data # << Return original inputs
+        "processed_data": processed_data,
+        "original_input": original_input_data
     }), 200
 
 
