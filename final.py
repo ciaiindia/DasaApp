@@ -136,7 +136,7 @@ def fetch_and_summarize_trial_for_client_state():
     if not processed_data.get('NCT_ID'): return jsonify({"status": "error", "message": f"Failed to process critical data for {nct_id}."}), 500
 
     # --- Generate Summary ---
-    prompt_trial_template = """You are an expert clinical trial analyst. Summarize the key aspects of the following clinical trial based *only* on the provided JSON data. Structure your summary into exactly three categories as specified below. Be concise and factual while generating the summary.
+    prompt_trial_template = """You are an expert clinical trial analyst. Summarize the key aspects of the following clinical trial based solely on the provided JSON data. Structure your summary into exactly three categories as specified below. Be concise and factual in your summary.
 
 Trial JSON Data:
 ```json
