@@ -163,8 +163,8 @@ Give the exact subheadings based on the summaries you are giving for these 3 cat
         trial_summary = chain_trial.run(trial_json_string=trial_json_string,
             nct_id=processed_data.get('NCT_ID', 'N/A'), brief_title=processed_data.get('Brief_Title', 'N/A'),
             official_title=processed_data.get('Official_Title', 'N/A'), conditions=processed_data.get('Conditions', 'N/A'),
-            inclusion_criteria_snippet=processed_data.get('Inclusion_Criteria', 'N/A')[:1000],
-            exclusion_criteria_snippet=processed_data.get('Exclusion_Criteria', 'N/A')[:1000]
+            inclusion_criteria_snippet=processed_data.get('Inclusion_Criteria', 'N/A')[:500],
+            exclusion_criteria_snippet=processed_data.get('Exclusion_Criteria', 'N/A')[:500]
         )
     except Exception as e:
         print(f"Error during LLM summarization for {nct_id}: {e}")
