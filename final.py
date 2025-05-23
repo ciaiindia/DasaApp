@@ -543,6 +543,130 @@ Here is the one such example:
         "insights": final_output
     }), 200
 
+
+import json
+import time
+from flask import request, jsonify # Assuming Flask app context
+
+INSIGHT_SUMMARY_PROMPT_TEMPLATE_TEXT = """You are a clinical data summarization expert. Given the structured JSON input below describing a clinical market definition, generate a summary in a **valid JSON format only**.
+
+Your summary must:
+- Clearly describe the **Broad Market Definition**, including all ICD codes.
+- Summarize the **Addressable Market Definition**, outlining age and gender criteria.
+- Include **Patient Attributes** such as age range, sub-groups, gender, and ASA class ICD codes.
+- Consolidate all **Exclusion ICD Codes**, clearly listing them without omitting any codes.
+
+⚠️ Very Important:
+- Return your response strictly as a JSON object using the following structure and key names:
+  - `"MarketDefinitionSummary"`
+    - `"BroadMarketDefinition"`: with `Description` and `ICDCodes`
+    - `"AddressableMarketDefinition"`: with `Description`
+    - `"PatientAttributes"`: with `AgeRange`, `SubGroups`, `Gender`, and `ASAClassICDCodes`
+    - `"ExclusionICDCodes"`: as a flat array containing all exclusion-related ICD codes
+
+- Do **not include any explanations, comments, or extra formatting outside the JSON block**.
+- Do **not omit any ICD codes**.
+
+📘 **Example Output Format to Follow Exactly:**
+```json
+{{
+  "MarketDefinitionSummary": {{
+    "BroadMarketDefinition": {{
+      "Description": "All ICD codes related to malignant neoplasm of breast are included to define the broader population.",
+      "ICDCodes": [
+        "C50.9", "C50.011", "C50.012", "C50.111", "C50.112",
+        "C50.211", "C50.212", "C50.311", "C50.312", "C50.411",
+        "C50.412", "C50.511", "C50.512", "C50.611", "C50.612",
+        "C50.811", "C50.812", "C50.911", "C50.912"
+      ]
+    }},
+    "AddressableMarketDefinition": {{
+      "Description": "Women aged 18 to 85 years with non-metastatic invasive breast carcinoma or carcinoma in situ treated via breast-conserving surgery."
+    }},
+    "PatientAttributes": {{
+      "AgeRange": "18-85",
+      "SubGroups": ["18-40", "41-60", "61-85"],
+      "Gender": "Female",
+      "ASAClassICDCodes": ["Z02.5", "Z02.6", "Z02.7"]
+    }},
+    "ExclusionICDCodes": [
+      "Z85.3", "Z85.4",
+      "C50.9", "C79.81",
+      "T88.7", "F11.1", "Z86.71",
+      "O99.3", "F99", "F02.8",
+      "C00-C97", "D00-D09",
+      "Z98.890", "Z76.5",
+      "Z59.0",
+      "Z00.6"
+    ]
+  }}
+}}
+```json
+{insights_json_string}
+Concise Narrative Summary of Insights:
+"""
+
+@app.route('/summarize_trial_insights', methods=['POST'])
+def summarize_trial_insights():
+    
+    start_time = time.time()
+    if not request.is_json:
+        return jsonify({"status": "error", "message": "Request must be JSON"}), 400
+
+    input_data = request.get_json()
+    # The key in the input JSON body that holds the output from '/generate_insights'
+    detailed_insights_payload = input_data.get('detailed_trial_insights')
+
+    if not detailed_insights_payload or not isinstance(detailed_insights_payload, dict):
+        return jsonify({
+            "status": "error",
+            "message": "Missing or invalid 'detailed_trial_insights' JSON in request body. This should be the JSON output from the '/generate_insights' endpoint."
+        }), 400
+
+    # Convert the provided detailed insights JSON to a string for the LLM
+    insights_json_string_to_summarize = json.dumps(detailed_insights_payload, indent=2)
+
+    summary_text = "Insights summary generation failed."
+    llm_error_message = None
+
+    try:
+        # Initialize LLM (you might want a specific temperature for summarization)
+        llm_summarizer = initialize_llm(temperature=0.2)
+        prompt = PromptTemplate.from_template(INSIGHT_SUMMARY_PROMPT_TEMPLATE_TEXT)
+        chain_summarize_insights = LLMChain(llm=llm_summarizer, prompt=prompt)
+
+        # Run the LLM chain to get the summary
+        summary_output = chain_summarize_insights.run(insights_json_string=insights_json_string_to_summarize)
+
+        # Basic cleanup of the LLM's response
+        summary_text = summary_output.strip()
+        if summary_text.lower().startswith("concise narrative summary of insights:"):
+            summary_text = summary_text[len("concise narrative summary of insights:"):].strip()
+
+    except Exception as e:
+        llm_error_message = f"Error during LLM insights summarization: {e}"
+        # Log the error for backend diagnostics
+        print(f"Error in /summarize_trial_insights endpoint: {llm_error_message}")
+        # The summary_text will contain the error message for the client
+        summary_text = f"Insights summary generation failed: Could not connect to summarization service or an internal error occurred."
+
+
+    end_time = time.time()
+
+    final_status = "success" if not llm_error_message else "error"
+    final_message = "Trial insights summarized successfully."
+    if llm_error_message:
+        final_message = "Failed to summarize trial insights. Please check the summary content for error details."
+
+
+    return jsonify({
+        "status": final_status,
+        "message": final_message,
+        "duration_seconds": round(end_time - start_time, 2),
+        "trial_summary": summary_text # This is the primary output for the client to display
+    }), 200
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=True)
