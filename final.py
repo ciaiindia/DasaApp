@@ -566,6 +566,9 @@ Your summary must:
 
 - Do **not include any explanations, comments, or extra formatting outside the JSON block**.
 - Do **not omit any ICD codes**.
+CRITICAL : 1. ALWAYS GIVE OUTPUT IN THE BELOW FORMAT ONLY
+2. DO NOT GIVE AS "UNDEFINED" TO ANY GROUP NAME IF YOU CANNOT FIND THE GROUP.
+3. ALWAYS GIVE GROUP NAMES WITH RESPECTIVE KEYS GROUP 1 , GROUP 2 ETC
 
 📘 **Example Output Format to Follow Exactly:**
 ```json
@@ -590,14 +593,14 @@ Your summary must:
       "ASAClassICDCodes": ["Z02.5", "Z02.6", "Z02.7"]
     }},
     "ExclusionICDCodes": [
-      "Z85.3", "Z85.4",
-      "C50.9", "C79.81",
-      "T88.7", "F11.1", "Z86.71",
-      "O99.3", "F99", "F02.8",
-      "C00-C97", "D00-D09",
-      "Z98.890", "Z76.5",
-      "Z59.0",
-      "Z00.6"
+      Group 1:Breast Surgery :["Z85.3", "Z85.4"],
+      Group 2:Metastatic Carcinoma:["C50.9", "C79.81"],
+      Group 3:Allergy/Substance Use:["T88.7", "F11.1", "Z86.71"],
+      Group 4:Pregnancy/Psychiatric:["O99.3", "F99", "F02.8"],
+      Group 5:Neoplasm (Non-breast):["C00-C97", "D00-D09"],
+      Group 6:Surgical History / Guardianship:["Z98.890", "Z76.5"],
+      Group 7:No Social Security:["Z59.0"],
+      Group 8:In Other Studies:["Z00.6"]
     ]
   }}
 }}
