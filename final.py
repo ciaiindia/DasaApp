@@ -604,17 +604,18 @@ Your summary must:
 - Do **not omit or drop any ICD codes or group names**.
 
 ⚠️ Very Important:
-- Return your response strictly as a JSON object using the following structure and key names:
+- ALWAYS return your response strictly as a JSON format using the following structure and key names:
   - `"MarketDefinitionSummary"`
     - `"BroadMarketDefinition"`: with `Description` and `ICDCodes`
     - `"AddressableMarketDefinition"`: with `Description`
-    - `"PatientAttributes"`: with `AgeRange`, `SubGroups`, `Gender`, and `ASAClassICDCodes`
+    - `"PatientAttributes"`: with `AgeRange`, `AgeGroups`, `Gender`
+    - `"InclusionICDCodes"`: as a flat array containing all inclusion-related ICD codes along with the group names of the ICD Codes
     - `"ExclusionICDCodes"`: as a flat array containing all exclusion-related ICD codes along with the group names of the ICD Codes
 
 - Do **not include any explanations, comments, or extra formatting outside the JSON block**.
 - Do **not omit any ICD codes**.
 
-📘 **Example Output Format to Follow Exactly:**
+📘 **Example JSON output Format to Follow Exactly:**
 CRITICAL : ALWAYS GIVE OUTPUT IN THE BELOW FORMAT ONLY
 DO NOT GIVE AS "UNDEFINED" TO ANY GROUP NAME IF YOU CANNOT FIND THE GROUP 
 ALWAYS GIVE GROUP NAMES WITH KEYS FOR GROUP IDENTIFICATION FOR EXAMPLE -  GROUP 1 , GROUP 2 ETC
