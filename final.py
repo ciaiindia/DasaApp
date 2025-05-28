@@ -585,7 +585,7 @@ import time
 from flask import request, jsonify # Assuming Flask app context
 
 INSIGHT_SUMMARY_PROMPT_TEMPLATE_TEXT = """You are a clinical data summarization expert. Given the structured JSON input below describing a clinical market definition, generate a summary in **valid JSON format only**.
- 
+
 Your summary must:
 - Clearly describe the **Broad Market Definition**, including all ICD codes.
 - Summarize the **Addressable Market Definition** in one sentence.
@@ -593,25 +593,26 @@ Your summary must:
   - `"AgeRange"`
   - `"AgeGroups"`
   - `"Gender"`
-- List all **Inclusion ICD Codes**, grouped with their associated group names.
-- List all **Exclusion ICD Codes**, grouped with their associated group names.
- 
+- List all **Inclusion ICD Codes**, grouped with:
+  - A unique group identifier (e.g., "Group 1", "Group 2", etc.)
+  - Group Name
+  - ICD Codes
+- List all **Exclusion ICD Codes**, grouped with:
+  - A unique group identifier
+  - Group Name
+  - ICD Codes
+
 ⚠️ Very Important:
-- ALWAYS return your response strictly as a JSON format using the following structure and key names:
-  - `"MarketDefinitionSummary"`
-    - `"BroadMarketDefinition"`: with `Description` and `ICDCodes`
-    - `"AddressableMarketDefinition"`: with `Description`
-    - `"PatientAttributes"`: with `AgeRange`, `AgeGroups`, `Gender`
-    - `"InclusionICDCodes"`: as a flat array containing all inclusion-related ICD codes along with the group names of the ICD Codes
-    - `"ExclusionICDCodes"`: as a flat array containing all exclusion-related ICD codes along with the group names of the ICD Codes
+- ALWAYS return your response strictly as a **JSON object** using the structure and key names shown below.
+- Use these top-level keys: `"MarketDefinitionSummary"`, `"BroadMarketDefinition"`, `"AddressableMarketDefinition"`, `"PatientAttributes"`, `"InclusionICDCodes"`, `"ExclusionICDCodes"`
+- Do **not include** any explanation, comments, or extra formatting outside the JSON block.
+- Do **not include group descriptions**.
+- Do **not omit any ICD codes or group names**.
+- DO NOT use `"undefined"` for any value. Always include valid `"Group"` and `"GroupName"` keys.
 
-- Do **not include any explanations, comments, or extra formatting outside the JSON block**.
-- Do **not omit any ICD codes**.
+📘 **Example JSON Output Format to Follow Exactly:**
+CRITICAL: ALWAYS GIVE OUTPUT IN THE BELOW FORMAT ONLY
 
-📘 **Example JSON output Format to Follow Exactly:**
-CRITICAL : ALWAYS GIVE OUTPUT IN THE BELOW FORMAT ONLY
-DO NOT GIVE AS "UNDEFINED" TO ANY GROUP NAME IF YOU CANNOT FIND THE GROUP 
-ALWAYS GIVE GROUP NAMES WITH KEYS FOR GROUP IDENTIFICATION FOR EXAMPLE -  GROUP 1 , GROUP 2 ETC
 ```json
 {{
   "MarketDefinitionSummary": {{
@@ -631,21 +632,56 @@ ALWAYS GIVE GROUP NAMES WITH KEYS FOR GROUP IDENTIFICATION FOR EXAMPLE -  GROUP 
       "AgeRange": "18-85",
       "AgeGroups": ["18-40", "41-60", "61-85"],
       "Gender": "Female"
-      
     }},
-    "InclusionICDCodes":[
-     Group1:"ASA Class": ["Z02.5", "Z02.6", "Z02.7"],
-     ...
-    ]
+    "InclusionICDCodes": [
+      {{
+        "Group": "Group 1",
+        "GroupName": "ASA Class",
+        "ICDCodes": ["Z02.5", "Z02.6", "Z02.7"]
+      }},
+      ...
+    ],
     "ExclusionICDCodes": [
-      Group 1:Breast Surgery :["Z85.3", "Z85.4"],
-      Group 2:Metastatic Carcinoma:["C50.9", "C79.81"],
-      Group 3:Allergy/Substance Use:["T88.7", "F11.1", "Z86.71"],
-      Group 4:Pregnancy/Psychiatric:["O99.3", "F99", "F02.8"],
-      Group 5:Neoplasm (Non-breast):["C00-C97", "D00-D09"],
-      Group 6:Surgical History / Guardianship:["Z98.890", "Z76.5"],
-      Group 7:No Social Security:["Z59.0"],
-      Group 8:In Other Studies:["Z00.6"]
+      {{
+        "Group": "Group 1",
+        "GroupName": "Breast Surgery Exclusion",
+        "ICDCodes": ["Z85.3", "Z85.4"]
+      }},
+      {{
+        "Group": "Group 2",
+        "GroupName": "Metastatic Breast Carcinoma",
+        "ICDCodes": ["C50.9", "C79.81"]
+      }},
+      {{
+        "Group": "Group 3",
+        "GroupName": "Allergy and Substance Abuse",
+        "ICDCodes": ["T88.7", "F11.1", "Z86.71"]
+      }},
+      {{
+        "Group": "Group 4",
+        "GroupName": "Pregnancy and Psychiatric Conditions",
+        "ICDCodes": ["O99.3", "F99", "F02.8"]
+      }},
+      {{
+        "Group": "Group 5",
+        "GroupName": "Neoplasm Exclusion",
+        "ICDCodes": ["C00-C97", "D00-D09"]
+      }},
+      {{
+        "Group": "Group 6",
+        "GroupName": "Surgical History Exclusion",
+        "ICDCodes": ["Z98.890", "Z76.5"]
+      }},
+      {{
+        "Group": "Group 7",
+        "GroupName": "Social Security Exclusion",
+        "ICDCodes": ["Z59.0"]
+      }},
+      {{
+        "Group": "Group 8",
+        "GroupName": "Research Participation Exclusion",
+        "ICDCodes": ["Z00.6"]
+      }}
     ]
   }}
 }}
