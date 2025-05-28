@@ -636,9 +636,12 @@ ALWAYS GIVE GROUP NAMES WITH KEYS FOR GROUP IDENTIFICATION FOR EXAMPLE -  GROUP 
     "PatientAttributes": {{
       "AgeRange": "18-85",
       "SubGroups": ["18-40", "41-60", "61-85"],
-      "Gender": "Female",
-      "ASAClassICDCodes": ["Z02.5", "Z02.6", "Z02.7"]
+      "Gender": "Female"
+      
     }},
+    "InclusionICDCodes":[
+     Group1:"ASA Class": ["Z02.5", "Z02.6", "Z02.7"]
+    ]
     "ExclusionICDCodes": [
       Group 1:Breast Surgery :["Z85.3", "Z85.4"],
       Group 2:Metastatic Carcinoma:["C50.9", "C79.81"],
