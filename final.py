@@ -215,23 +215,59 @@ def fetch_and_summarize_trial_for_client_state():
     if not processed_data.get('NCT_ID'): return jsonify({"status": "error", "message": f"Failed to process critical data for {nct_id}."}), 500
 
     # --- Generate Summary ---
-    prompt_trial_template = """You are an expert clinical trial analyst. Summarize the key aspects from the clinical trial based solely on the provided JSON data. Structure your summary into exactly three categories as specified below. Be concise and factual in your summary.
+    prompt_trial_template = """You are a clinical data summarization expert. Given the structured JSON input below describing a clinical market definition, generate a summary in a **valid JSON format only**.
 
-Trial JSON Data:
+Your summary must:
+- Clearly describe the **Broad Market Definition**, including all ICD codes.
+- Summarize the **Addressable Market Definition**, outlining age and gender criteria.
+- Include **Patient Attributes** such as age range, sub-groups, gender, and ASA class ICD codes.
+- Consolidate all **Exclusion ICD Codes**, clearly listing them without omitting any codes.
+
+⚠️ Very Important:
+- Return your response strictly as a JSON object using the following structure and key names:
+  - `"MarketDefinitionSummary"`
+    - `"BroadMarketDefinition"`: with `Description` and `ICDCodes`
+    - `"AddressableMarketDefinition"`: with `Description`
+    - `"PatientAttributes"`: with `AgeRange`, `SubGroups`, `Gender`, and `ASAClassICDCodes`
+    - `"ExclusionICDCodes"`: as a flat array containing all exclusion-related ICD codes
+
+- Do **not include any explanations, comments, or extra formatting outside the JSON block**.
+- Do **not omit any ICD codes**.
+
+📘 **Example Output Format to Follow Exactly:**
 ```json
-{trial_data_for_summary}
-Please provide the summary in this format:
-
-1: Specific Diagnosis/Condition(s) Targeted
-[List the primary medical condition(s) this trial is focused on, as mentioned in the 'conditions' field within the provided JSON data.]
-
-2: Key Comorbidities or Patient Characteristics (from Eligibility Criteria)
-[Based only on the 'Inclusion Criteria' and 'Exclusion Criteria' fields within the provided JSON data, list significant comorbidities, prior treatments, or patient characteristics that determine eligibility. Focus on medical conditions mentioned.]
-
-3: Overall Trial Objective (One Sentence)
-[Provide a single sentence summarizing the main goal or purpose of the study, inferring from title, interventions, and conditions within the provided JSON data.]
-
-Give the exact subheadings based on the summaries you are giving for these 3 categories.
+{
+  "MarketDefinitionSummary": {
+    "BroadMarketDefinition": {
+      "Description": "All ICD codes related to malignant neoplasm of breast are included to define the broader population.",
+      "ICDCodes": [
+        "C50.9", "C50.011", "C50.012", "C50.111", "C50.112",
+        "C50.211", "C50.212", "C50.311", "C50.312", "C50.411",
+        "C50.412", "C50.511", "C50.512", "C50.611", "C50.612",
+        "C50.811", "C50.812", "C50.911", "C50.912"
+      ]
+    },
+    "AddressableMarketDefinition": {
+      "Description": "Women aged 18 to 85 years with non-metastatic invasive breast carcinoma or carcinoma in situ treated via breast-conserving surgery."
+    },
+    "PatientAttributes": {
+      "AgeRange": "18–85",
+      "SubGroups": ["18–40", "41–60", "61–85"],
+      "Gender": "Female",
+      "ASAClassICDCodes": ["Z02.5", "Z02.6", "Z02.7"]
+    },
+    "ExclusionICDCodes": [
+      "Z85.3", "Z85.4",
+      "C50.9", "C79.81",
+      "T88.7", "F11.1", "Z86.71",
+      "O99.3", "F99", "F02.8",
+      "C00-C97", "D00-D09",
+      "Z98.890", "Z76.5",
+      "Z59.0",
+      "Z00.6"
+    ]
+  }
+}
 """
     trial_summary = "Summary generation failed." # Default
     try:
