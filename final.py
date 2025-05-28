@@ -596,13 +596,6 @@ Your summary must:
 - List all **Inclusion ICD Codes**, grouped with their associated group names.
 - List all **Exclusion ICD Codes**, grouped with their associated group names.
  
-⚠️ Instructions:
-- Return your response strictly as a **JSON object** using the structure shown below.
-- Use these top-level keys: `"MarketDefinitionSummary"`, `"BroadMarketDefinition"`, `"AddressableMarketDefinition"`, `"PatientAttributes"`, `"InclusionICDCodes"`, `"ExclusionICDCodes"`
-- Include all ICD codes exactly as provided.
-- Do **not include** any explanation or text outside the JSON.
-- Do **not omit or drop any ICD codes or group names**.
-
 ⚠️ Very Important:
 - ALWAYS return your response strictly as a JSON format using the following structure and key names:
   - `"MarketDefinitionSummary"`
@@ -641,7 +634,8 @@ ALWAYS GIVE GROUP NAMES WITH KEYS FOR GROUP IDENTIFICATION FOR EXAMPLE -  GROUP 
       
     }},
     "InclusionICDCodes":[
-     Group1:"ASA Class": ["Z02.5", "Z02.6", "Z02.7"]
+     Group1:"ASA Class": ["Z02.5", "Z02.6", "Z02.7"],
+     ...
     ]
     "ExclusionICDCodes": [
       Group 1:Breast Surgery :["Z85.3", "Z85.4"],
