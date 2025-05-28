@@ -635,7 +635,7 @@ ALWAYS GIVE GROUP NAMES WITH KEYS FOR GROUP IDENTIFICATION FOR EXAMPLE -  GROUP 
     }},
     "PatientAttributes": {{
       "AgeRange": "18-85",
-      "SubGroups": ["18-40", "41-60", "61-85"],
+      "AgeGroups": ["18-40", "41-60", "61-85"],
       "Gender": "Female"
       
     }},
