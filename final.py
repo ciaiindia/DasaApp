@@ -605,7 +605,7 @@ Your summary must:
 ⚠️ Very Important:
 - ALWAYS return your response strictly as a **JSON object** using the structure and key names shown below.
 - Use these top-level keys: `"MarketDefinitionSummary"`, `"BroadMarketDefinition"`, `"AddressableMarketDefinition"`, `"PatientAttributes"`, `"InclusionICDCodes"`, `"ExclusionICDCodes"`
-- ALWAYS get the information about Inclusion and Exclusion codes from the input json.
+- ALWAYS get the information about Inclusion codes and Exclusion codes from the AdditionalICDCodesRequired and ICDCodesToExclude respectively from input json.
 - Do **not include** any explanation, comments, or extra formatting outside the JSON block.
 - Do **not include group descriptions**.
 - Do **not omit any ICD codes or group names**.
