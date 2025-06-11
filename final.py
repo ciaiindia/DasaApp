@@ -362,10 +362,11 @@ For the exclusion criteria, evaluate each condition or contraindication describe
 Exclude any codes that refer to medical procedures, surgeries, or adverse events, as the focus should remain strictly on diagnostic classifications.
 Ensure that all selected codes are accurate, up-to-date, and aligned with standard classifications, referencing authoritative sources such as the WHO ICD-10 database or equivalent coding guidelines.
 Carefully examine the inclusion and exclusion criteria to extract:
-1. Age Groups – Analyze the clinical condition specified in the trial and categorize participants into meaningful age groups. While a separate group for ages 65+ can be considered, create 3 to 5 distinct age buckets within the 1–60 age range based on the nature of the disease and the trial's inclusion criteria. Do not restrict the categorization to just the 1–60 and 65+ groups. Ensure that each age group is clearly defined, contextually relevant, and accurately reflects the trial's requirements.
+1. Age Groups – Analyze the clinical condition specified in the trial and categorize participants into meaningful age groups. While a separate group for ages 65+ can be considered, always create 3 to 5 distinct age buckets within the 1–60 age range based on the nature of the disease and the trial's inclusion criteria. Do not restrict the categorization to just the 1–60 and 65+ groups. Ensure that each age group is clearly defined, contextually relevant, and accurately reflects the trial's requirements.
 2. Age Criteria – Review the details related to age mentioned in the inclusion criteria, if available.
 2. Gender eligibility, if mentioned (e.g., "All", "Male", "Female").
 3. In AddressableMarketDefinition - Analyze the text in the inclusion criteria thoroughly and provide it.
+4. Disease Groups - Always create disease groups between 1 to 8. Please note that, it should not exceed more than 8 groups.
 Ensure the extracted insights are based strictly on the given clinical trial data and ICD definitions.
 
 Ensure the extracted insights are based strictly on the given clinical trial data and ICD definitions.
